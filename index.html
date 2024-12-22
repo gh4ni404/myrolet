@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wheel of Fortune</title>
+    <style>
+        h1{
+            color: #fff;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background: #333;
+        }
+
+        canvas {
+            margin: 20px auto;
+            display: block;
+            border: 5px solid #fff;
+            border-radius: 50%;
+        }
+
+        #controls {
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button#spin {
+            background-color: #28a745;
+            color: white;
+            position: absolute;
+            top: 49%;
+            border-radius: 50%;
+            width: 75px;
+            height: 75px;
+        }
+
+        button#reset {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .arrow {
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 30px solid #fff;
+            margin: 0 auto;
+            position: relative;
+            top: 10px;
+        }
+
+        #login-form {
+            margin-top: 20px;
+        }
+
+        input {
+            padding: 10px;
+            font-size: 16px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button#login {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Wheel of Fortune</h1>
+    <div class="arrow"></div>
+    <canvas id="wheel" width="500" height="500"></canvas>
+    <div id="controls">
+        <button id="spin">Spin</button>
+        <button id="reset">Reset</button>
+    </div>
+
+    <div id="login-form">
+        <input type="text" id="username" placeholder="Enter your name" />
+        <button id="login">Login</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("wheel");
+        const ctx = canvas.getContext("2d");
+        const spinButton = document.getElementById("spin");
+        const resetButton = document.getElementById("reset");
+        const loginButton = document.getElementById("login");
+        const usernameInput = document.getElementById("username");
+
+        let names = ["Alice", "Bob", "Charlie", "Diana", "Edward", "Fiona", "George"];
+        const colors = ["#f94144", "#f3722c", "#f8961e", "#f9c74f", "#90be6d", "#43aa8b", "#577590"];
+        let isSpinning = false;
+        let angle = 0;
+        let spinAngle = 0;
+
+        function drawWheel() {
+            const radius = canvas.width / 2;
+            const arcSize = (2 * Math.PI) / names.length;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            names.forEach((name, index) => {
+                const startAngle = index * arcSize;
+                const endAngle = startAngle + arcSize;
+
+                ctx.beginPath();
+                ctx.fillStyle = colors[index % colors.length];
+                ctx.moveTo(radius, radius);
+                ctx.arc(radius, radius, radius, startAngle, endAngle);
+                ctx.fill();
+                ctx.closePath();
+
+                ctx.save();
+                ctx.translate(radius, radius);
+                ctx.rotate(startAngle + arcSize / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#000";
+                ctx.font = "18px Arial";
+                ctx.fillText(name, radius - 10, 10);
+                ctx.restore();
+            });
+        }
+
+        function spinWheel() {
+            if (isSpinning || names.length === 0) return;
+            isSpinning = true;
+            spinAngle = Math.random() * (Math.PI * 2) + (Math.PI * 4); // At least two full rotations
+
+            const spinInterval = setInterval(() => {
+                angle += 0.1;
+                if (angle >= spinAngle) {
+                    clearInterval(spinInterval);
+                    angle = spinAngle % (Math.PI * 2);
+                    selectWinner();
+                }
+                draw();
+            }, 16);
+        }
+
+        function selectWinner() {
+            const arcSize = (2 * Math.PI) / names.length;
+            const adjustedAngle = (angle + Math.PI / 2) % (2 * Math.PI);
+            const selectedIndex = Math.floor((2 * Math.PI - adjustedAngle) / arcSize) % names.length;
+            const winner = names[selectedIndex];
+
+            alert(`${winner} wins!`);
+            names.splice(selectedIndex, 1);
+            angle = 0;
+            drawWheel();
+            isSpinning = false;
+        }
+
+        function draw() {
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate(angle);
+            ctx.translate(-canvas.width / 2, -canvas.height / 2);
+            drawWheel();
+            ctx.restore();
+        }
+
+        function resetWheel() {
+            names = ["Alice", "Bob", "Charlie", "Diana", "Edward", "Fiona", "George"];
+            angle = 0;
+            drawWheel();
+        }
+
+        function addNameToWheel() {
+            const username = usernameInput.value.trim();
+            if (username && !names.includes(username)) {
+                names.push(username);
+                usernameInput.value = "";
+                drawWheel();
+                alert(`${username} has been added to the wheel!`);
+            } else if (names.includes(username)) {
+                alert("This name is already in the wheel.");
+            } else {
+                alert("Please enter a valid name.");
+            }
+        }
+
+        spinButton.addEventListener("click", spinWheel);
+        resetButton.addEventListener("click", resetWheel);
+        loginButton.addEventListener("click", addNameToWheel);
+
+        drawWheel();
+    </script>
+</body>
+
+</html>
